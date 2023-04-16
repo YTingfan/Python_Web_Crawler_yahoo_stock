@@ -1,0 +1,37 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+url="https://tw.stock.yahoo.com/rank/volume"
+res=requests.get(url)
+soup=BeautifulSoup(res.text,'lxml')
+name=[]
+for item in soup.find_all(class_="Lh(20px) Fw(600) Fz(16px) Ell"):
+    name.append(item.text)
+#print(name)
+top15=[]
+for i in range(0,15):
+    top15.append(name[i])
+#print(top15)
+tradingvolume=[]
+price=[]
+for i in range(0,15):
+    tradingvolume.append(int(soup.select('.table-body-wrapper li span')[i*12+10].text.replace(',',"")))
+    price.append(float(soup.select('.table-body-wrapper li span')[i*12+2].text))
+#print(tradingvolume,price)
+sumvol=0
+sumprice=0
+for i in range(0,15):
+    sumvol=sumvol+tradingvolume[i]
+    sumprice=sumprice+price[i]
+avgvol=sumvol/15
+avgprice=sumprice/15
+print('總成交量:',sumvol, '\n總成交價:',sumprice,'\n平均成交量:',avgvol,'\n平均成交價:',avgprice)
+df = pd.DataFrame(zip(top15,price,tradingvolume),columns=['top15','成交價','交易量']) 
+df.to_excel('TWstocks.xlsx',index=False)
+import matplotlib.pyplot as plt
+from pylab import mpl
+mpl.rcParams['font.sans-serif'] = ['Microsoft YaHei']  
+mpl.rcParams['axes.unicode_minus'] = False     
+df.plot(x ='top15', y= '交易量', kind ='bar',figsize=(10,8))
+plt.plot(top15,price,linestyle='-.',marker='.',markersize=9,color='green',label='line 1')
+plt.figure(figsize=(8,10))
